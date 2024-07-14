@@ -48,7 +48,7 @@ impl Thread {
         }
     }
 
-    pub fn append_message(&mut self, message: Message) {
+    pub fn push(&mut self, message: Message) {
         self.messages.push(message)
     }
 }
