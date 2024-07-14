@@ -1,0 +1,14 @@
+[package]
+name = "open-router"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+llm-interface.workspace = true
+
+serde.workspace = true
+reqwest.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+tokio-test.workspace = true

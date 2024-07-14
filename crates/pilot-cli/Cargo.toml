@@ -1,0 +1,10 @@
+[package]
+name = "pilot-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+llm-interface.workspace = true
+open-router.workspace = true
+tokio.workspace = true
+clap = "4.5.9"
