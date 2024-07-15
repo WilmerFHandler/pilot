@@ -7,7 +7,7 @@ use open_router::OpenRouterClient;
 
 #[tokio::main]
 async fn main() {
-    let client = OpenRouterClient::from_env_variable("gryphe/mythomax-l2-13b")
+    let client = OpenRouterClient::from_env_variable("meta-llama/llama-3-8b-instruct")
         .expect("Couldn't find api key. Make sure you have set your OPENROUTER_API_KEY enviroment variable!");
     let mut thread = llm_interface::Thread::new();
    
