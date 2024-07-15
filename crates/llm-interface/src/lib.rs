@@ -29,17 +29,26 @@ impl Message {
 
 pub struct Thread {
     pub messages: Vec<Message>,
+    pub system_msg: Option<String>,
 }
 
 impl Thread {
     pub fn new() -> Self {
         Thread {
-            messages: Vec::new()
+            messages: Vec::new(),
+            system_msg: None
         }
     }
-
     pub fn push(&mut self, message: Message) {
         self.messages.push(message)
+    }
+
+    pub fn set_system(&mut self, system_message: String) {
+        self.system_msg = Some(system_message)
+    }
+
+    pub fn remove_system(&mut self) {
+        self.system_msg = None;
     }
 }
 

@@ -20,21 +20,32 @@ nest! {
     }
 }
 
-impl RequestBody {
-    // FIX: Should model be &str or Strings?
-    fn new(model: &str, messages: &Vec<Message>) -> Self {
+impl From<Message> for SerializableMessage {
+    fn from(value: Message) -> Self {
         Self {
-            model: model.to_string(),
+            role: match value.role {
+                Role::User => "user".to_string(),
+                Role::Assistant => "assistant".to_string(),
+            },
+            content: value.content,
+        }
+    }
+}
+
+impl RequestBody {
+    fn new(model: String, messages: Vec<SerializableMessage>) -> Self {
+        Self {
+            model,
+            messages
+        }
+    }
+
+    fn from_messages(model: String, messages: &Vec<Message>) -> Self {
+        Self {
+            model,
             messages: messages
                 .iter()
-                .map(|m| SerializableMessage {
-                    role: match m.role {
-                        Role::User => "user".to_string(),
-                        Role::Assistant => "assistant".to_string(),
-                    },
-                    // FIX: Could this clone be removed
-                    content: m.content.clone(),
-                })
+                .map(|m| SerializableMessage::from(m.clone()))
                 .collect(),
         }
     }
@@ -102,6 +113,7 @@ impl OpenRouterClient {
         let api_key = std::env::var("OPENROUTER_API_KEY");
 
         Ok(OpenRouterClient {
+            //FIX: This is super ugly. Questionmark shouldn't be here
             api_key: api_key?,
             model: model.to_string(),
         })
@@ -112,7 +124,23 @@ impl OpenRouterClient {
         thread: &Thread,
     ) -> Result<(Message, Option<Usage>), Box<dyn Error>> {
         let client = reqwest::Client::new();
-        let body = RequestBody::new(&self.model, &thread.messages);
+        
+        let messages = {
+            match thread.system_msg.clone() {
+                // NOTE: Take a look at this. This is ugly. Fix in the future
+                Some(system_msg) => { 
+                    let mut messages: Vec<SerializableMessage> = thread.messages.iter().map(|m| SerializableMessage::from(m.clone())).collect();
+                    messages.insert(0, SerializableMessage {
+                        role: "system".to_string(),
+                        content: system_msg,
+                    });
+                    messages
+                },
+                None => thread.messages.iter().map(|m| SerializableMessage::from(m.clone())).collect(),
+            }
+        };
+
+        let body = RequestBody::new(self.model.clone(), messages);
 
         let response = client
             .post("https://openrouter.ai/api/v1/chat/completions")
