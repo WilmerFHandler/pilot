@@ -4,6 +4,7 @@
 pub enum Role {
     User,
     Assistant,
+    System,
 }
 
 #[derive(Debug, Clone)]
@@ -25,30 +26,26 @@ impl Message {
             content: content.to_string(),
         }
     }
+    pub fn create_system_message(content: &str) -> Self {
+        Message {
+            role: Role::System,
+            content: content.to_string(),
+        }
+    }
 }
 
 pub struct Conversation {
     pub messages: Vec<Message>,
-    pub system_msg: Option<String>,
 }
 
 impl Conversation {
     pub fn new() -> Self {
         Conversation {
             messages: Vec::new(),
-            system_msg: None
         }
     }
     pub fn push(&mut self, message: Message) {
         self.messages.push(message)
-    }
-
-    pub fn set_system(&mut self, system_message: String) {
-        self.system_msg = Some(system_message)
-    }
-
-    pub fn remove_system(&mut self) {
-        self.system_msg = None;
     }
 }
 

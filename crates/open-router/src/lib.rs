@@ -9,6 +9,8 @@ use std::error::Error;
 use llm_interface::*;
 use nestify::nest;
 
+
+// TODO: Put RequestBody in seperate file
 nest! {
     #[derive(Serialize)]*
     struct RequestBody {
@@ -26,6 +28,7 @@ impl From<Message> for SerializableMessage {
             role: match value.role {
                 Role::User => "user".to_string(),
                 Role::Assistant => "assistant".to_string(),
+                Role::System => "system".to_string()
             },
             content: value.content,
         }
@@ -48,6 +51,7 @@ impl RequestBody {
     }
 }
 
+// TODO: Put ResponseBody in seperate file
 nest! {
     #[derive(Deserialize)]*
     struct ResponseBody {
@@ -70,9 +74,12 @@ impl TryFrom<SerializableResponseMessage> for Message {
     type Error = String;
     fn try_from(value: SerializableResponseMessage) -> Result<Self, Self::Error> {
         Ok(Message {
+            // TODO: See if there is a way to leverege the type system to enforce
+            // all roles are covered
             role: match value.role.as_str() {
                 "assistant" => Role::Assistant,
                 "user" => Role::User,
+                "system" => Role::System,
                 _ => return Err(format!("Unknown role: {}", value.role)),
             },
             content: match value.content {
@@ -121,33 +128,7 @@ impl OpenRouterClient {
     ) -> Result<(Message, Option<Usage>), Box<dyn Error>> {
         let client = reqwest::Client::new();
 
-        // NOTE: Take a look at this. This is ugly. Fix in the future
-        let messages = {
-            match conversation.system_msg.clone() {
-                Some(system_msg) => {
-                    let mut messages: Vec<SerializableMessage> = conversation
-                        .messages
-                        .iter()
-                        .map(|m| SerializableMessage::from(m.clone()))
-                        .collect();
-                    messages.insert(
-                        0,
-                        SerializableMessage {
-                            role: "system".to_string(),
-                            content: system_msg,
-                        },
-                    );
-                    messages
-                }
-                None => conversation
-                    .messages
-                    .iter()
-                    .map(|m| SerializableMessage::from(m.clone()))
-                    .collect(),
-            }
-        };
-
-        let body = RequestBody::new(self.model.clone(), messages);
+        let body = RequestBody::from_messages(self.model.clone(), &conversation.messages);
 
         let response = client
             .post("https://openrouter.ai/api/v1/chat/completions")
