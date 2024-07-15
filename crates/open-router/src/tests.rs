@@ -18,7 +18,7 @@ async fn test_openrouter_client() {
         .await
         .expect("Error getting response");
 
-    println!("User: {}", conversation.messages[0].content);
+    println!("User: {}", conversation[0].content);
     println!("Assistant: {}", response.content);
 
     assert_eq!(response.role, Role::Assistant);
@@ -49,8 +49,8 @@ async fn test_system_message() {
         .await
         .expect("Error getting response");
 
-    println!("System: {}", conversation.messages[0].content);
-    println!("User: {}", conversation.messages[1].content);
+    println!("System: {}", conversation[0].content);
+    println!("User: {}", conversation[1].content);
     println!("Assistant: {}", response.content);
 
     assert!(response.content == String::from("paris"));

@@ -1,5 +1,7 @@
 #![allow(dead_code, unused_variables)]
 
+use std::ops::{Index, IndexMut};
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Role {
     User,
@@ -38,6 +40,7 @@ pub struct Conversation {
     pub messages: Vec<Message>,
 }
 
+// TODO: Maybe implement .iter() and .into_iter()?
 impl Conversation {
     pub fn new() -> Self {
         Conversation {
@@ -45,7 +48,21 @@ impl Conversation {
         }
     }
     pub fn push(&mut self, message: Message) {
-        self.messages.push(message)
+        self.messages.push(message);
+    }
+    pub fn insert(&mut self, index: usize, message: Message) {
+        self.messages.insert(index, message);
+    }
+}
+impl Index<usize> for Conversation {
+    type Output = Message;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.messages[index]
+    }
+}
+impl IndexMut<usize> for Conversation {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.messages[index]
     }
 }
 
