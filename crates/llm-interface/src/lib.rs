@@ -1,16 +1,13 @@
 #![allow(dead_code, unused_variables)]
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug)]
-#[serde(rename_all = "lowercase")]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Role {
     User,
     Assistant,
     System,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Message {
     pub role: Role,
     pub content: String,
@@ -53,7 +50,6 @@ impl Thread {
     }
 }
 
-#[derive(Deserialize)]
 pub struct Usage {
     pub prompt_tokens: usize,
     pub completion_tokens: usize,
