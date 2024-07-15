@@ -107,11 +107,10 @@ impl OpenRouterClient {
     }
 
     pub fn from_env_variable(model: &str) -> Result<Self, Box<dyn Error>> {
-        let api_key = std::env::var("OPENROUTER_API_KEY");
+        let api_key = std::env::var("OPENROUTER_API_KEY")?;
 
         Ok(OpenRouterClient {
-            //FIX: This is super ugly. Questionmark shouldn't be here
-            api_key: api_key?,
+            api_key,
             model: model.to_string(),
         })
     }
@@ -122,9 +121,9 @@ impl OpenRouterClient {
     ) -> Result<(Message, Option<Usage>), Box<dyn Error>> {
         let client = reqwest::Client::new();
 
+        // NOTE: Take a look at this. This is ugly. Fix in the future
         let messages = {
             match conversation.system_msg.clone() {
-                // NOTE: Take a look at this. This is ugly. Fix in the future
                 Some(system_msg) => {
                     let mut messages: Vec<SerializableMessage> = conversation
                         .messages
