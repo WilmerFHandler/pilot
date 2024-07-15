@@ -4,7 +4,6 @@
 pub enum Role {
     User,
     Assistant,
-    System,
 }
 
 #[derive(Debug, Clone)]
@@ -23,12 +22,6 @@ impl Message {
     pub fn create_assistant_message(content: &str) -> Self {
         Message {
             role: Role::Assistant,
-            content: content.to_string(),
-        }
-    }
-    pub fn create_system_message(content: &str) -> Self {
-        Message {
-            role: Role::System,
             content: content.to_string(),
         }
     }

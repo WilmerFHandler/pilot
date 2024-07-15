@@ -7,6 +7,83 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 
 use llm_interface::*;
+use nestify::nest;
+
+nest! {
+    #[derive(Serialize)]*
+    struct RequestBody {
+        model: String,
+        messages: Vec<struct SerializableMessage{
+            role: String,
+            content: String,
+        }>,
+    }
+}
+
+impl RequestBody {
+    // FIX: Should model be &str or Strings?
+    fn new(model: &str, messages: &Vec<Message>) -> Self {
+        Self {
+            model: model.to_string(),
+            messages: messages
+                .iter()
+                .map(|m| SerializableMessage {
+                    role: match m.role {
+                        Role::User => "user".to_string(),
+                        Role::Assistant => "assistant".to_string(),
+                    },
+                    // FIX: Could this clone be removed
+                    content: m.content.clone(),
+                })
+                .collect(),
+        }
+    }
+}
+
+nest! {
+    #[derive(Deserialize)]*
+    struct ResponseBody {
+        choices: Vec<struct Choice {
+            finish_reason: String,
+            message: struct SerializableResponseMessage {
+                role: String,
+                content: Option<String>,
+            },
+        }>,
+        usage: Option<struct SerializableUsage {
+            prompt_tokens: usize,
+            completion_tokens: usize,
+            total_tokens: usize,
+        }>
+    }
+}
+
+impl TryFrom<SerializableResponseMessage> for Message {
+    type Error = String;
+    fn try_from(value: SerializableResponseMessage) -> Result<Self, Self::Error> {
+        Ok(Message {
+            role: match value.role.as_str() {
+                "assistant" => Role::Assistant,
+                "user" => Role::User,
+                _ => return Err(format!("Unknown role: {}", value.role)),
+            },
+            content: match value.content {
+                Some(content) => content,
+                None => return Err(String::from("Message must have content")),
+            },
+        })
+    }
+}
+
+impl From<SerializableUsage> for Usage {
+    fn from(value: SerializableUsage) -> Self {
+        Self {
+            prompt_tokens: value.prompt_tokens,
+            completion_tokens: value.completion_tokens,
+            total_tokens: value.total_tokens,
+        }
+    }
+}
 
 pub struct OpenRouterClient {
     api_key: String,
@@ -35,11 +112,7 @@ impl OpenRouterClient {
         thread: &Thread,
     ) -> Result<(Message, Option<Usage>), Box<dyn Error>> {
         let client = reqwest::Client::new();
-        let body = RequestBody {
-            // HACK: Maybe these don't need to be cloned
-            model: self.model.clone(),
-            messages: thread.messages.clone(),
-        };
+        let body = RequestBody::new(&self.model, &thread.messages);
 
         let response = client
             .post("https://openrouter.ai/api/v1/chat/completions")
@@ -49,28 +122,10 @@ impl OpenRouterClient {
             .send()
             .await?;
 
-        let response_body: ResponseBody = response.json().await?;
+        let mut response_body: ResponseBody = response.json().await?;
         Ok((
-            response_body.choices[0].message.clone(),
-            Some(response_body.usage),
+            Message::try_from(response_body.choices.remove(0).message)?,
+            response_body.usage.map(Usage::from),
         ))
     }
-}
-
-#[derive(Serialize)]
-struct RequestBody {
-    model: String,
-    messages: Vec<Message>,
-}
-
-#[derive(Deserialize)]
-struct Choice {
-    message: Message,
-    finish_reason: String,
-}
-
-#[derive(Deserialize)]
-struct ResponseBody {
-    choices: Vec<Choice>,
-    usage: Usage,
 }

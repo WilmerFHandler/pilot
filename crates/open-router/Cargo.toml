@@ -8,6 +8,7 @@ llm-interface.workspace = true
 
 serde.workspace = true
 reqwest.workspace = true
+nestify.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
