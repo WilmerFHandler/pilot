@@ -34,10 +34,7 @@ impl From<Message> for SerializableMessage {
 
 impl RequestBody {
     fn new(model: String, messages: Vec<SerializableMessage>) -> Self {
-        Self {
-            model,
-            messages
-        }
+        Self { model, messages }
     }
 
     fn from_messages(model: String, messages: &Vec<Message>) -> Self {
@@ -124,19 +121,30 @@ impl OpenRouterClient {
         thread: &Thread,
     ) -> Result<(Message, Option<Usage>), Box<dyn Error>> {
         let client = reqwest::Client::new();
-        
+
         let messages = {
             match thread.system_msg.clone() {
                 // NOTE: Take a look at this. This is ugly. Fix in the future
-                Some(system_msg) => { 
-                    let mut messages: Vec<SerializableMessage> = thread.messages.iter().map(|m| SerializableMessage::from(m.clone())).collect();
-                    messages.insert(0, SerializableMessage {
-                        role: "system".to_string(),
-                        content: system_msg,
-                    });
+                Some(system_msg) => {
+                    let mut messages: Vec<SerializableMessage> = thread
+                        .messages
+                        .iter()
+                        .map(|m| SerializableMessage::from(m.clone()))
+                        .collect();
+                    messages.insert(
+                        0,
+                        SerializableMessage {
+                            role: "system".to_string(),
+                            content: system_msg,
+                        },
+                    );
                     messages
-                },
-                None => thread.messages.iter().map(|m| SerializableMessage::from(m.clone())).collect(),
+                }
+                None => thread
+                    .messages
+                    .iter()
+                    .map(|m| SerializableMessage::from(m.clone()))
+                    .collect(),
             }
         };
 
