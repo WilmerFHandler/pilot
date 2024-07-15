@@ -27,14 +27,14 @@ impl Message {
     }
 }
 
-pub struct Thread {
+pub struct Conversation {
     pub messages: Vec<Message>,
     pub system_msg: Option<String>,
 }
 
-impl Thread {
+impl Conversation {
     pub fn new() -> Self {
-        Thread {
+        Conversation {
             messages: Vec::new(),
             system_msg: None
         }

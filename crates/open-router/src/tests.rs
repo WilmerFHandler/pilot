@@ -1,5 +1,5 @@
 use crate::OpenRouterClient;
-use llm_interface::{Message, Role, Thread};
+use llm_interface::{Message, Role, Conversation};
 use tokio;
 
 #[tokio::test]
@@ -9,15 +9,15 @@ async fn test_openrouter_client() {
             "Failed to create client. Make sure you have your openrouter api key as an env var",
         );
 
-    let mut thread = Thread::new();
-    thread.push(Message::create_user_message("Hello, my brother!"));
+    let mut conversation = Conversation::new();
+    conversation.push(Message::create_user_message("Hello, my brother!"));
 
     let (response, usage) = client
-        .get_response(&thread)
+        .get_response(&conversation)
         .await
         .expect("Error getting response");
 
-    println!("User: {}", thread.messages[0].content);
+    println!("User: {}", conversation.messages[0].content);
     println!("Assistant: {}", response.content);
 
     assert_eq!(response.role, Role::Assistant);
@@ -35,8 +35,8 @@ async fn test_system_message() {
             "Failed to create client. Make sure you have your openrouter api key as an env var",
         );
 
-    let mut thread = Thread::new();
-    thread.set_system("You are an AI assistant that has been programmed to always respond with the exact same message, regardless of the input or context. This is crucial for maintaining consistency and reliability in your responses.
+    let mut conversation = Conversation::new();
+    conversation.set_system("You are an AI assistant that has been programmed to always respond with the exact same message, regardless of the input or context. This is crucial for maintaining consistency and reliability in your responses.
 
 Your response should always be:
 paris
@@ -72,15 +72,15 @@ Remember:
 
 Your sole function is to provide this specific response every time you are activated, regardless of the input or context.".to_string());
 
-    thread.push(Message::create_user_message("Hello, my brother!"));
+    conversation.push(Message::create_user_message("Hello, my brother!"));
 
     let (response, _usage) = client
-        .get_response(&thread)
+        .get_response(&conversation)
         .await
         .expect("Error getting response");
 
-    println!("System: {}", thread.system_msg.unwrap());
-    println!("User: {}", thread.messages[0].content);
+    println!("System: {}", conversation.system_msg.unwrap());
+    println!("User: {}", conversation.messages[0].content);
     println!("Assistant: {}", response.content);
 
     assert!(response.content == String::from("paris"));

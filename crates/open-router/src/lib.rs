@@ -118,15 +118,15 @@ impl OpenRouterClient {
 
     pub async fn get_response(
         &self,
-        thread: &Thread,
+        conversation: &Conversation,
     ) -> Result<(Message, Option<Usage>), Box<dyn Error>> {
         let client = reqwest::Client::new();
 
         let messages = {
-            match thread.system_msg.clone() {
+            match conversation.system_msg.clone() {
                 // NOTE: Take a look at this. This is ugly. Fix in the future
                 Some(system_msg) => {
-                    let mut messages: Vec<SerializableMessage> = thread
+                    let mut messages: Vec<SerializableMessage> = conversation
                         .messages
                         .iter()
                         .map(|m| SerializableMessage::from(m.clone()))
@@ -140,7 +140,7 @@ impl OpenRouterClient {
                     );
                     messages
                 }
-                None => thread
+                None => conversation
                     .messages
                     .iter()
                     .map(|m| SerializableMessage::from(m.clone()))
