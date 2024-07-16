@@ -5,6 +5,8 @@ use std::io::Write;
 use llm_interface::{Message, Client};
 use open_router::OpenRouterClient;
 
+use colored::*;
+
 #[tokio::main]
 async fn main() {
     let client = OpenRouterClient::from_env_variable("meta-llama/llama-3-8b-instruct")
@@ -12,14 +14,14 @@ async fn main() {
     let mut conversation = llm_interface::Conversation::new();
    
     loop {
-        print!("You: ");
+        print!("{}", "You: ".blue());
         let mut prompt = String::new();
         std::io::stdout().flush().expect("Failed to flush");
         std::io::stdin().read_line(&mut prompt).expect("Error");
         
         conversation.push(Message::create_user_message(prompt.as_str()));
         let (response, usage) = client.get_response(&conversation).await.expect("Failed to get response.");
-        println!("Assistant: {}", response.content);
+        println!("\n{} {}\n","Assistant".red(), response.content.yellow());
         conversation.push(response);
     }
 }
