@@ -2,7 +2,7 @@
 
 use std::io::Write;
 
-use llm_interface::Message;
+use llm_interface::{Message, Client};
 use open_router::OpenRouterClient;
 
 #[tokio::main]

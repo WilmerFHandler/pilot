@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_variables)]
 
-use std::ops::{Index, IndexMut};
+use std::{future::Future, ops::{Index, IndexMut}};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Role {
@@ -70,4 +70,8 @@ pub struct Usage {
     pub prompt_tokens: usize,
     pub completion_tokens: usize,
     pub total_tokens: usize,
+}
+
+pub trait Client {
+    fn get_response(&self, conversation: &Conversation) -> impl Future< Output = Result<(Message, Option<Usage>), String>>;
 }
