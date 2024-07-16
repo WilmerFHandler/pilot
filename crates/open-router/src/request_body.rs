@@ -28,10 +28,6 @@ impl From<Message> for SerializableMessage {
 }
 
 impl RequestBody {
-    pub fn new(model: String, messages: Vec<SerializableMessage>) -> Self {
-        Self { model, messages }
-    }
-
     // TODO: Move this into the FromIter trait
     pub fn from_messages(model: String, messages: &Vec<Message>) -> Self {
         Self {

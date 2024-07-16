@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use llm_interface::{Message, Role, Usage};
 use nestify::nest;
 use serde::Deserialize;
