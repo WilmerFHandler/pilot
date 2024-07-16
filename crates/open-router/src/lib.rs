@@ -3,102 +3,16 @@
 #[cfg(test)]
 mod tests;
 
-use serde::{Deserialize, Serialize};
+mod request_body;
+use request_body::RequestBody;
+
+mod response_body;
+use response_body::ResponseBody;
+
+
 use std::error::Error;
 
 use llm_interface::*;
-use nestify::nest;
-
-
-// TODO: Put RequestBody in seperate file
-nest! {
-    #[derive(Serialize)]*
-    struct RequestBody {
-        model: String,
-        messages: Vec<struct SerializableMessage{
-            role: String,
-            content: String,
-        }>,
-    }
-}
-
-impl From<Message> for SerializableMessage {
-    fn from(value: Message) -> Self {
-        Self {
-            role: match value.role {
-                Role::User => "user".to_string(),
-                Role::Assistant => "assistant".to_string(),
-                Role::System => "system".to_string()
-            },
-            content: value.content,
-        }
-    }
-}
-
-impl RequestBody {
-    fn new(model: String, messages: Vec<SerializableMessage>) -> Self {
-        Self { model, messages }
-    }
-
-    fn from_messages(model: String, messages: &Vec<Message>) -> Self {
-        Self {
-            model,
-            messages: messages
-                .iter()
-                .map(|m| SerializableMessage::from(m.clone()))
-                .collect(),
-        }
-    }
-}
-
-// TODO: Put ResponseBody in seperate file
-nest! {
-    #[derive(Deserialize)]*
-    struct ResponseBody {
-        choices: Vec<struct Choice {
-            finish_reason: String,
-            message: struct SerializableResponseMessage {
-                role: String,
-                content: Option<String>,
-            },
-        }>,
-        usage: Option<struct SerializableUsage {
-            prompt_tokens: usize,
-            completion_tokens: usize,
-            total_tokens: usize,
-        }>
-    }
-}
-
-impl TryFrom<SerializableResponseMessage> for Message {
-    type Error = String;
-    fn try_from(value: SerializableResponseMessage) -> Result<Self, Self::Error> {
-        Ok(Message {
-            // TODO: See if there is a way to leverege the type system to enforce
-            // all roles are covered
-            role: match value.role.as_str() {
-                "assistant" => Role::Assistant,
-                "user" => Role::User,
-                "system" => Role::System,
-                _ => return Err(format!("Unknown role: {}", value.role)),
-            },
-            content: match value.content {
-                Some(content) => content,
-                None => return Err(String::from("Message must have content")),
-            },
-        })
-    }
-}
-
-impl From<SerializableUsage> for Usage {
-    fn from(value: SerializableUsage) -> Self {
-        Self {
-            prompt_tokens: value.prompt_tokens,
-            completion_tokens: value.completion_tokens,
-            total_tokens: value.total_tokens,
-        }
-    }
-}
 
 pub struct OpenRouterClient {
     api_key: String,
@@ -140,8 +54,8 @@ impl OpenRouterClient {
 
         let mut response_body: ResponseBody = response.json().await?;
         Ok((
-            Message::try_from(response_body.choices.remove(0).message)?,
-            response_body.usage.map(Usage::from),
+            response_body.try_extract_message()?,
+            response_body.extract_usage(),
         ))
     }
 }
